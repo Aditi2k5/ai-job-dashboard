@@ -193,14 +193,7 @@ export default function ArticleDetail({ article }: { article: Article }) {
           <div className="relative z-10">
             {/* Header Tags */}
             <div className="flex items-center gap-4 mb-6">
-              <Badge 
-                variant="outline" 
-                className="px-4 py-2 text-sm font-semibold bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border-slate-200/60 dark:border-slate-700/60"
-              >
-                {article.category}
-              </Badge>
               <div className={`flex items-center gap-2 px-4 py-2 rounded-full border font-semibold ${getTrendColor(article.insights.trend)}`}>
-                {getTrendIcon(article.insights.trend)}
                 <span className="text-sm capitalize">{article.insights.trend} Impact</span>
               </div>
             </div>
