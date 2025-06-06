@@ -7,7 +7,75 @@ const dbConfig = {
     user: process.env.MYSQL_USER,
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE,
-    port: parseInt(process.env.DB_PORT || '3306'),
+    port: parseInt(process.env.MYSQL_PORT || '3306'),
+}
+
+// Helper function to parse funding data and extract numeric values with units
+function parseFundingData(fundingData: string | any[]): string | undefined {
+  if (!fundingData) return undefined;
+  
+  let dataString = '';
+  
+  // Handle array or string input
+  if (Array.isArray(fundingData)) {
+    dataString = fundingData.join(' ');
+  } else {
+    dataString = String(fundingData);
+  }
+  
+  // Remove extra whitespace and normalize
+  dataString = dataString.trim().toLowerCase();
+  
+  if (!dataString) return undefined;
+  
+  // Patterns to match various funding formats
+  const patterns = [
+    // $1.5B, $1.5 billion, $1.5b
+    /\$?(\d+(?:\.\d+)?)\s*(?:billion|b\b)/gi,
+    // $1.5M, $1.5 million, $1.5m  
+    /\$?(\d+(?:\.\d+)?)\s*(?:million|m\b)/gi,
+    // Just numbers with B/M
+    /(\d+(?:\.\d+)?)\s*([bm])\b/gi,
+    // Numbers followed by billion/million words
+    /(\d+(?:\.\d+)?)\s*(billion|million)/gi
+  ];
+  
+  const matches = [];
+  
+  for (const pattern of patterns) {
+    let match;
+    while ((match = pattern.exec(dataString)) !== null) {
+      const value = parseFloat(match[1]);
+      const unit = match[2] ? match[2].toLowerCase() : '';
+      
+      if (unit.startsWith('b') || unit === 'billion') {
+        matches.push(`$${value}B`);
+      } else if (unit.startsWith('m') || unit === 'million') {
+        matches.push(`$${value}M`);
+      }
+    }
+  }
+  
+  // If no structured matches found, try to extract any numbers and guess context
+  if (matches.length === 0) {
+    const numberMatch = dataString.match(/\$?(\d+(?:\.\d+)?)/);
+    if (numberMatch) {
+      const value = parseFloat(numberMatch[1]);
+      // If the original string contains billion/million context, use it
+      if (dataString.includes('billion') || dataString.includes('b')) {
+        matches.push(`$${value}B`);
+      } else if (dataString.includes('million') || dataString.includes('m')) {
+        matches.push(`$${value}M`);
+      } else if (value > 1000) {
+        // Assume large numbers are millions
+        matches.push(`$${value}M`);
+      } else {
+        matches.push(`$${value}K`);
+      }
+    }
+  }
+  
+  return matches.length > 0 ? matches[0] : undefined;
 }
 
 export async function GET(
@@ -41,8 +109,10 @@ export async function GET(
         skills_remaining,
         skills_automated,
         affected_industry,
-        funding_data
-      FROM future_of_jobs 
+        funding_data,
+        detailed_analysis,
+        summary
+      FROM jobs_tracker
       WHERE id = ?
     `, [articleId])
     
@@ -58,6 +128,9 @@ export async function GET(
     
     const row = articles[0]
     
+    // Parse funding data properly
+    const parsedFundingData = parseFundingData(row.funding_data);
+    
     // Transform the data to match your component interface
     const article = {
       id: row.id,
@@ -70,8 +143,8 @@ export async function GET(
       }),
       category: row.affected_industry || 'Technology',
       url: row.url,
-      summary: generateSummary(row),
-      fullContent: generateFullContent(row),
+      summary: row.summary,
+      fullContent: row.detailed_analysis,
       insights: {
         jobsAffected: parseInt(row.jobs_at_risk) || 0,
         companiesInvolved: calculateCompaniesInvolved(row),
@@ -84,7 +157,7 @@ export async function GET(
         trend: determineTrend(row.jobs_at_risk, row.new_ai_jobs),
         impactScore: calculateImpactScore(row.jobs_at_risk, row.new_ai_jobs),
         geographicSpread: ['Global', 'North America', 'Europe'], // You can expand this based on your data
-        costSavings: row.funding_data || undefined,
+        costSavings: parsedFundingData,
         jobCreationRatio: calculateJobRatio(row.jobs_replaced, row.new_ai_jobs)
       }
     }
@@ -116,50 +189,6 @@ function extractSourceFromUrl(url: string): string {
   } catch {
     return 'Tech Analysis'
   }
-}
-
-// Helper function to generate summary
-function generateSummary(row: any): string {
-  const jobsAtRisk = parseInt(row.jobs_at_risk) || 0
-  const newAiJobs = parseInt(row.new_ai_jobs) || 0
-  const jobsReplaced = parseInt(row.jobs_replaced) || 0
-  const industry = row.affected_industry || 'various industries'
-  
-  return `This analysis examines the impact of AI and automation on ${industry}. 
-    The study reveals that ${jobsAtRisk.toLocaleString()} jobs are at risk of being affected, 
-    with ${jobsReplaced.toLocaleString()} positions potentially being replaced. 
-    However, the technological advancement is also expected to create ${newAiJobs.toLocaleString()} 
-    new AI-related positions, indicating a shift in the job market rather than a net loss.`
-}
-
-// Helper function to generate full content
-function generateFullContent(row: any): string {
-  const jobsAtRisk = parseInt(row.jobs_at_risk) || 0
-  const newAiJobs = parseInt(row.new_ai_jobs) || 0
-  const jobsReplaced = parseInt(row.jobs_replaced) || 0
-  const industry = row.affected_industry || 'technology sector'
-  const skillsAutomated = row.skills_automated ? row.skills_automated.split(',').map((s: string) => s.trim()) : []
-  const skillsRemaining = row.skills_remaining ? row.skills_remaining.split(',').map((s: string) => s.trim()) : []
-  
-  return `The ${industry} is experiencing significant transformation due to artificial intelligence and automation technologies. 
-    Our comprehensive analysis indicates that ${jobsAtRisk.toLocaleString()} positions are currently at risk of being impacted by these technological changes.
-
-    Key findings from this analysis include:
-
-    Job Displacement: Approximately ${jobsReplaced.toLocaleString()} traditional roles may be replaced by automated systems. 
-    The skills most affected include: ${skillsAutomated.join(', ')}.
-
-    Job Creation: Despite the displacement, ${newAiJobs.toLocaleString()} new positions are expected to emerge, 
-    particularly in areas requiring human oversight of AI systems, creative problem-solving, and technical expertise.
-
-    Skills Evolution: The workforce will need to adapt by developing new competencies. 
-    Skills that remain valuable include: ${skillsRemaining.join(', ')}.
-
-    Economic Impact: The transition represents both challenges and opportunities for the ${industry}. 
-    ${row.funding_data ? `Investment in this transition is estimated at ${row.funding_data}.` : 'Significant investment will be required to manage this transition effectively.'}
-
-    This transformation requires proactive planning from both employers and workers to ensure a smooth transition 
-    and to maximize the benefits of technological advancement while minimizing negative impacts on employment.`
 }
 
 // Helper function to calculate companies involved (you can enhance this based on your data)

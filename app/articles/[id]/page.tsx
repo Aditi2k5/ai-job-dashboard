@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import ArticleDetail from "@/components/article-detail"
-import { Loader2, AlertCircle, ArrowLeft } from "lucide-react"
+import { Loader2, AlertCircle, ArrowLeft, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
+import {LayoutWrapper} from "@/components/layout-wrapper"
 
 interface Article {
   id: number
@@ -72,69 +74,158 @@ export default function ArticlePage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading article...</span>
-        </div>
-      </div>
-    )
-  }
+  const LoadingState = () => (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <Card className="w-full max-w-md border-0 shadow-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm">
+        <CardContent className="p-8">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="relative">
+              <Loader2 className="h-12 w-12 animate-spin text-blue-600 dark:text-blue-400" />
+              <div className="absolute inset-0 h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/50 animate-pulse opacity-20"></div>
+            </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Loading Article
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Please wait while we fetch the article details...
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
 
-  if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <p className="text-red-500 mb-4">Error: {error}</p>
-            <div className="space-x-2">
-              <Button onClick={() => fetchArticle(params.id as string)}>
-                Retry
+  const ErrorState = () => (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <Card className="w-full max-w-lg border-0 shadow-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm">
+        <CardContent className="p-8">
+          <div className="flex flex-col items-center space-y-6">
+            <div className="relative">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="absolute inset-0 w-16 h-16 bg-red-500/10 rounded-full animate-ping"></div>
+            </div>
+            
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-semibold text-red-600 dark:text-red-400">
+                {error === 'Article not found' ? 'Article Not Found' : 'Something Went Wrong'}
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md">
+                {error === 'Article not found' 
+                  ? 'The article you are looking for does not exist or may have been removed.'
+                  : `We encountered an error while loading the article: ${error}`
+                }
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
+              <Button 
+                onClick={() => fetchArticle(params.id as string)}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                disabled={loading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                Try Again
               </Button>
-              <Button variant="outline" asChild>
+              <Button variant="outline" asChild className="flex-1">
                 <Link href="/">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
+                  Go Back
                 </Link>
               </Button>
             </div>
           </div>
-        </div>
-      </div>
-    )
-  }
+        </CardContent>
+      </Card>
+    </div>
+  )
 
-  if (!article) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="text-center py-8">
-          <p className="text-muted-foreground mb-4">Article not found</p>
-          <Button variant="outline" asChild>
+  const NotFoundState = () => (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <Card className="w-full max-w-lg border-0 shadow-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm">
+        <CardContent className="p-8">
+          <div className="flex flex-col items-center space-y-6">
+            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
+              <AlertCircle className="h-8 w-8 text-slate-500 dark:text-slate-400" />
+            </div>
+            
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                Article Not Available
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md">
+                The article you requested could not be found. It may have been moved or deleted.
+              </p>
+            </div>
+            
+            <Button variant="outline" asChild className="w-full max-w-xs">
+              <Link href="/">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Return to Dashboard
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+
+  const ArticleContent = () => (
+    <div className="space-y-6">
+      {/* Enhanced Navigation Bar */}
+      <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200/50 dark:border-slate-700/50 -mx-6 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <Button 
+            variant="ghost" 
+            asChild 
+            className="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
             <Link href="/">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Link>
           </Button>
+          
+          <div className="flex items-center space-x-2">
+            <div className="hidden sm:flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
+              <span>Article</span>
+              <span>•</span>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => fetchArticle(params.id as string)}
+              disabled={loading}
+              className="bg-white/80 dark:bg-slate-800/80"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </div>
       </div>
-    )
+      
+      {/* Article Detail Component */}
+      {article && <ArticleDetail article={article} />}
+    </div>
+  )
+
+  const content = () => {
+    if (loading) return <LoadingState />
+    if (error) return <ErrorState />
+    if (!article) return <NotFoundState />
+    return <ArticleContent />
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <Button variant="ghost" asChild>
-          <Link href="/">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Link>
-        </Button>
+    <LayoutWrapper>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
+        <div className="container mx-auto px-6 py-8 max-w-7xl">
+          {content()}
+        </div>
       </div>
-      
-      <ArticleDetail article={article} />
-    </div>
+    </LayoutWrapper>
   )
 }

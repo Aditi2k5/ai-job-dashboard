@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CalendarDays, ExternalLink, TrendingDown, TrendingUp, Users, Building, Globe, DollarSign, ArrowRight } from "lucide-react"
+import { CalendarDays, ExternalLink, TrendingDown, TrendingUp, Users, Building, Globe, DollarSign, ArrowRight, Clock, Target } from "lucide-react"
 import { useEffect, useRef } from "react"
 import { Chart, registerables } from "chart.js"
 
@@ -48,12 +48,11 @@ export default function ArticleDetail({ article }: { article: Article }) {
         const skillsCreated = article.insights.skillsCreated?.length || 0
 
         skillsComparisonChartInstance.current = new Chart(ctx, {
-          type: "bar",
+          type: "doughnut",
           data: {
             labels: ["Skills Replaced", "New Skills Created"],
             datasets: [
               {
-                label: "Number of Skills",
                 data: [skillsReplaced, skillsCreated],
                 backgroundColor: [
                   "rgba(239, 68, 68, 0.8)",
@@ -64,7 +63,6 @@ export default function ArticleDetail({ article }: { article: Article }) {
                   "rgba(34, 197, 94, 1)"
                 ],
                 borderWidth: 2,
-                borderRadius: 8,
               },
             ],
           },
@@ -73,43 +71,18 @@ export default function ArticleDetail({ article }: { article: Article }) {
             maintainAspectRatio: false,
             plugins: {
               legend: {
-                display: false,
-              },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: "Number of Skills",
-                  color: "#64748b",
+                position: 'bottom',
+                labels: {
+                  padding: 20,
                   font: {
                     size: 12,
                     weight: 500
-                  }
-                },
-                grid: {
-                  color: "rgba(100, 116, 139, 0.1)",
-                },
-                ticks: {
-                  color: "#64748b",
-                  font: {
-                    size: 11
-                  }
+                  },
+                  color: "#64748b"
                 }
               },
-              x: {
-                grid: {
-                  display: false,
-                },
-                ticks: {
-                  color: "#64748b",
-                  font: {
-                    size: 11
-                  }
-                }
-              }
             },
+            cutout: '60%',
           },
         })
       }
@@ -131,9 +104,9 @@ export default function ArticleDetail({ article }: { article: Article }) {
 
   const getTrendColor = (trend: string) => {
     switch (trend) {
-      case "positive": return "text-emerald-700 bg-emerald-100 border-emerald-300 dark:text-emerald-300 dark:bg-emerald-900/70 dark:border-emerald-600"
-      case "negative": return "text-red-700 bg-red-100 border-red-300 dark:text-red-300 dark:bg-red-900/70 dark:border-red-600"
-      default: return "text-blue-700 bg-blue-100 border-blue-300 dark:text-blue-300 dark:bg-blue-900/70 dark:border-blue-600"
+      case "positive": return "text-emerald-700 bg-emerald-50/80 border-emerald-200/60 dark:text-emerald-300 dark:bg-emerald-950/60 dark:border-emerald-800/60 backdrop-blur-sm"
+      case "negative": return "text-red-700 bg-red-50/80 border-red-200/60 dark:text-red-300 dark:bg-red-950/60 dark:border-red-800/60 backdrop-blur-sm"
+      default: return "text-blue-700 bg-blue-50/80 border-blue-200/60 dark:text-blue-300 dark:bg-blue-950/60 dark:border-blue-800/60 backdrop-blur-sm"
     }
   }
 
@@ -141,7 +114,7 @@ export default function ArticleDetail({ article }: { article: Article }) {
     switch (trend) {
       case "positive": return <TrendingUp className="h-4 w-4" />
       case "negative": return <TrendingDown className="h-4 w-4" />
-      default: return <Users className="h-4 w-4" />
+      default: return <Target className="h-4 w-4" />
     }
   }
 
@@ -150,15 +123,13 @@ export default function ArticleDetail({ article }: { article: Article }) {
     if (!data) return "N/A"
     
     try {
-      // Remove common JSON artifacts and clean the string
       let cleaned = data
-        .replace(/[{}"']/g, '') // Remove JSON brackets and quotes
-        .replace(/\\/g, '') // Remove escape characters
-        .replace(/:\s*/g, ': ') // Normalize spacing around colons
-        .replace(/,\s*/g, ', ') // Normalize spacing around commas
+        .replace(/[{}"']/g, '')
+        .replace(/\\/g, '')
+        .replace(/:\s*/g, ': ')
+        .replace(/,\s*/g, ', ')
         .trim()
       
-      // If it looks like key-value pairs, extract just the values
       if (cleaned.includes(':')) {
         const pairs = cleaned.split(',').map(pair => pair.trim())
         const values = pairs.map(pair => {
@@ -177,23 +148,19 @@ export default function ArticleDetail({ article }: { article: Article }) {
     }
   }
 
-  // Function to extract and format cost impact
   const extractCostImpact = (costSavings?: string) => {
     if (!costSavings) return "N/A"
     
-    // First try to extract dollar amounts
     const dollarMatches = costSavings.match(/\$[\d.,]+[BMKk]?/g)
     if (dollarMatches && dollarMatches.length > 0) {
       return dollarMatches[0]
     }
     
-    // Try to extract percentage
     const percentMatch = costSavings.match(/(\d+(?:\.\d+)?)%/)
     if (percentMatch) {
       return `${percentMatch[1]}%`
     }
     
-    // Try to extract other numeric values with units
     const numericMatch = costSavings.match(/(\d+(?:\.\d+)?)\s*([BMK]illion|[BMK]|million|billion|thousand)/i)
     if (numericMatch) {
       const [, amount, unit] = numericMatch
@@ -207,164 +174,171 @@ export default function ArticleDetail({ article }: { article: Article }) {
       }
     }
     
-    // Clean and return the original string
     return cleanDataString(costSavings)
   }
 
-  // Function to get skills at risk count for jobs affected
   const getSkillsAtRiskCount = () => {
     return article.insights.skillsReplaced?.length || 0
   }
 
-  // Clean array data (sectors, geographic spread, etc.)
   const cleanArrayData = (arr: string[]) => {
     return arr.map(item => cleanDataString(item)).filter(item => item !== "N/A")
   }
 
   return (
-    <div className="space-y-8">
-      {/* Enhanced Article Header */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border border-slate-200/60 dark:border-slate-700/60 shadow-lg">
-        <div className="relative z-10 p-8">
-          <div className="flex items-start justify-between mb-6">
-            <div className="space-y-4 flex-1">
-              {/* Enhanced Tags Section */}
-              <div className="flex items-center gap-3 flex-wrap">
-                <Badge 
-                  variant="outline" 
-                  className="px-4 py-2 text-sm font-semibold bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-200 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  {article.category}
-                </Badge>
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-lg border font-semibold shadow-sm ${getTrendColor(article.insights.trend)}`}>
-                  {getTrendIcon(article.insights.trend)}
-                  <span className="text-sm capitalize">{article.insights.trend} Impact</span>
-                </div>
+    <div className="max-w-7xl mx-auto space-y-8">
+      {/* Enhanced Article Header with transparent background */}
+      <Card className="border-0 shadow-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50 overflow-hidden">
+        <CardContent className="p-8 lg:p-12">
+          <div className="relative z-10">
+            {/* Header Tags */}
+            <div className="flex items-center gap-4 mb-6">
+              <Badge 
+                variant="outline" 
+                className="px-4 py-2 text-sm font-semibold bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border-slate-200/60 dark:border-slate-700/60"
+              >
+                {article.category}
+              </Badge>
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-full border font-semibold ${getTrendColor(article.insights.trend)}`}>
+                {getTrendIcon(article.insights.trend)}
+                <span className="text-sm capitalize">{article.insights.trend} Impact</span>
               </div>
-              
-              {/* Article Title */}
-              <h1 className="text-3xl lg:text-4xl font-bold leading-tight text-slate-900 dark:text-slate-100 pr-4">
-                {article.title}
-              </h1>
-              
-              {/* Enhanced Metadata Section */}
-              <div className="flex items-center gap-6 text-slate-700 dark:text-slate-300 flex-wrap">
-                <div className="flex items-center gap-3 bg-white/60 dark:bg-slate-800/60 px-4 py-2 rounded-lg backdrop-blur-sm border border-slate-200/50 dark:border-slate-600/50">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full shadow-sm"></div>
-                  <span className="font-semibold text-sm">{article.source}</span>
-                </div>
-                <div className="flex items-center gap-3 bg-white/60 dark:bg-slate-800/60 px-4 py-2 rounded-lg backdrop-blur-sm border border-slate-200/50 dark:border-slate-600/50">
-                  <CalendarDays className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                  <span className="font-medium text-sm">{new Date(article.date).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}</span>
-                </div>
+            </div>
+            
+            {/* Title */}
+            <h1 className="text-3xl lg:text-5xl font-bold leading-tight text-slate-900 dark:text-slate-100 mb-6">
+              {article.title}
+            </h1>
+            
+            {/* Metadata */}
+            <div className="flex items-center gap-6 text-slate-700 dark:text-slate-300 mb-8 flex-wrap">
+              <div className="flex items-center gap-3 bg-white/90 dark:bg-slate-800/90 px-4 py-2 rounded-lg backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span className="font-semibold text-sm">{article.source}</span>
               </div>
-              
-              {/* Enhanced URL Display */}
-              <div className="bg-slate-100/80 dark:bg-slate-800/80 rounded-lg p-4 border border-slate-200/50 dark:border-slate-600/50 backdrop-blur-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Source Article:</p>
-                    <a 
-                      href={article.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline break-all transition-colors"
-                    >
-                      {article.url}
-                    </a>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="bg-white/80 dark:bg-slate-700/80 border-slate-300 dark:border-slate-600 hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 shrink-0" 
-                    asChild
+              <div className="flex items-center gap-3 bg-white/90 dark:bg-slate-800/90 px-4 py-2 rounded-lg backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50">
+                <CalendarDays className="h-4 w-4" />
+                <span className="font-medium text-sm">{new Date(article.date).toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}</span>
+              </div>
+            </div>
+            
+            {/* Source Link */}
+            <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-xl p-6 border border-slate-200/50 dark:border-slate-700/50">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Source Article</p>
+                  <a 
+                    href={article.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline break-all transition-colors"
                   >
-                    <a href={article.url} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Open
-                    </a>
-                  </Button>
+                    {article.url}
+                  </a>
                 </div>
+                <Button variant="outline" size="sm" asChild className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
+                  <a href={article.url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open
+                  </a>
+                </Button>
               </div>
             </div>
           </div>
-        </div>
-        
-        {/* Enhanced Background Decoration */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-blue-200/30 dark:from-blue-400/20 via-purple-200/20 dark:via-purple-400/10 to-transparent rounded-full -translate-y-40 translate-x-40"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-emerald-200/20 dark:from-emerald-400/10 to-transparent rounded-full translate-y-32 -translate-x-32"></div>
-      </div>
+          
+          {/* Background decoration */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-blue-200/20 dark:from-blue-400/10 via-purple-200/10 dark:via-purple-400/5 to-transparent rounded-full -translate-y-48 translate-x-48"></div>
+        </CardContent>
+      </Card>
 
-      {/* Key Metrics */}
+      {/* Transparent Key Metrics Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/70 dark:to-blue-900/70 border border-blue-200/50 dark:border-blue-800/50">
+        <Card className="border-0 shadow-lg bg-blue-50/60 dark:bg-blue-950/60 backdrop-blur-sm border border-blue-200/40 dark:border-blue-800/40 overflow-hidden">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-              <div className="text-right">
-                <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Skills at Risk</p>
-                <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">
-                  {getSkillsAtRiskCount()}
-                </p>
-                <p className="text-xs text-blue-600 dark:text-blue-400">
-                  Skills affected
-                </p>
+            <div className="flex items-start justify-between h-full">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-blue-100/80 dark:bg-blue-800/80 backdrop-blur-sm rounded-lg">
+                    <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Skills at Risk</p>
+                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                      {getSkillsAtRiskCount()}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-blue-600 dark:text-blue-400">Skills affected by automation</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/70 dark:to-purple-900/70 border border-purple-200/50 dark:border-purple-800/50">
+        <Card className="border-0 shadow-lg bg-purple-50/60 dark:bg-purple-950/60 backdrop-blur-sm border border-purple-200/40 dark:border-purple-800/40 overflow-hidden">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <Building className="h-8 w-8 text-purple-600 dark:text-purple-400" />
-              <div className="text-right">
-                <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Organizations</p>
-                <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">
-                  {formatNumber(article.insights.companiesInvolved)}
-                </p>
-                <p className="text-xs text-purple-600 dark:text-purple-400">
-                  Organizations studied
-                </p>
+            <div className="flex items-start justify-between h-full">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-purple-100/80 dark:bg-purple-800/80 backdrop-blur-sm rounded-lg">
+                    <Building className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Organizations</p>
+                    <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+                      {formatNumber(article.insights.companiesInvolved)}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-purple-600 dark:text-purple-400">Companies in study</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/70 dark:to-emerald-900/70 border border-emerald-200/50 dark:border-emerald-800/50">
+        <Card className="border-0 shadow-lg bg-emerald-50/60 dark:bg-emerald-950/60 backdrop-blur-sm border border-emerald-200/40 dark:border-emerald-800/40 overflow-hidden">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <Globe className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
-              <div className="text-right">
-                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Geographic Reach</p>
-                <p className="text-3xl font-bold text-emerald-900 dark:text-emerald-100">
-                  {article.insights.geographicSpread.length}
-                </p>
-                <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                  Regions affected
-                </p>
+            <div className="flex items-start justify-between h-full">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-emerald-100/80 dark:bg-emerald-800/80 backdrop-blur-sm rounded-lg">
+                    <Globe className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Global Reach</p>
+                    <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">
+                      {article.insights.geographicSpread.length}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400">Regions affected</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/70 dark:to-orange-900/70 border border-orange-200/50 dark:border-orange-800/50">
+        <Card className="border-0 shadow-lg bg-orange-50/60 dark:bg-orange-950/60 backdrop-blur-sm border border-orange-200/40 dark:border-orange-800/40 overflow-hidden">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <DollarSign className="h-8 w-8 text-orange-600 dark:text-orange-400" />
-              <div className="text-right">
-                <p className="text-sm font-medium text-orange-700 dark:text-orange-300">
-                  {article.insights.costSavings ? "Cost Impact" : "Job Creation Ratio"}
-                </p>
-                <p className="text-2xl font-bold text-orange-900 dark:text-orange-100 break-words">
-                  {article.insights.costSavings ? extractCostImpact(article.insights.costSavings) : `${article.insights.jobCreationRatio || 0}:1`}
-                </p>
+            <div className="flex items-start justify-between h-full">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-orange-100/80 dark:bg-orange-800/80 backdrop-blur-sm rounded-lg">
+                    <DollarSign className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-orange-700 dark:text-orange-300">
+                      {article.insights.costSavings ? "Cost Impact" : "Job Ratio"}
+                    </p>
+                    <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
+                      {article.insights.costSavings ? extractCostImpact(article.insights.costSavings) : `${article.insights.jobCreationRatio || 0}:1`}
+                    </p>
+                  </div>
+                </div>
                 <p className="text-xs text-orange-600 dark:text-orange-400">
-                  {article.insights.costSavings ? "Investment/Savings" : "New jobs per eliminated"}
+                  {article.insights.costSavings ? "Investment impact" : "New jobs created"}
                 </p>
               </div>
             </div>
@@ -372,15 +346,19 @@ export default function ArticleDetail({ article }: { article: Article }) {
         </Card>
       </div>
 
-      {/* Content Section */}
+      {/* Main Content Grid with transparent cards */}
       <div className="grid gap-8 lg:grid-cols-3">
+        {/* Left Column - Main Content */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Summary */}
-          <Card className="border-0 shadow-lg border border-slate-200/50 dark:border-slate-700/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl text-slate-900 dark:text-slate-100">Executive Summary</CardTitle>
+          {/* Executive Summary */}
+          <Card className="border-0 shadow-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
+                Executive Summary
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               <p className="text-base leading-relaxed text-slate-700 dark:text-slate-300">
                 {cleanDataString(article.summary)}
               </p>
@@ -388,14 +366,17 @@ export default function ArticleDetail({ article }: { article: Article }) {
           </Card>
 
           {/* Detailed Analysis */}
-          <Card className="border-0 shadow-lg border border-slate-200/50 dark:border-slate-700/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl text-slate-900 dark:text-slate-100">Detailed Analysis</CardTitle>
+          <Card className="border-0 shadow-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <div className="w-1 h-6 bg-emerald-500 rounded-full"></div>
+                Detailed Analysis
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               <div className="prose prose-sm max-w-none dark:prose-invert">
                 {cleanDataString(article.fullContent).split('\n\n').map((paragraph, index) => (
-                  <p key={index} className="mb-4 leading-relaxed text-sm text-slate-700 dark:text-slate-300">
+                  <p key={index} className="mb-4 leading-relaxed text-slate-700 dark:text-slate-300">
                     {paragraph}
                   </p>
                 ))}
@@ -403,72 +384,80 @@ export default function ArticleDetail({ article }: { article: Article }) {
             </CardContent>
           </Card>
 
-          {/* Enhanced Geographic Impact */}
-          <Card className="border-0 shadow-lg border border-slate-200/50 dark:border-slate-700/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg text-slate-900 dark:text-slate-100">Geographic Impact</CardTitle>
+          {/* Geographic Impact */}
+          <Card className="border-0 shadow-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <div className="w-1 h-6 bg-purple-500 rounded-full"></div>
+                Geographic Impact
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+            <CardContent className="pt-0">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {cleanArrayData(article.insights.geographicSpread).map((region, index) => (
-                  <div key={region} className="flex items-center gap-3 p-3 bg-slate-50/80 dark:bg-slate-800/80 rounded-lg border border-slate-200/50 dark:border-slate-700/50">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">{region}</span>
+                  <div key={region} className="flex items-center gap-3 p-4 bg-slate-50/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg border border-slate-200/60 dark:border-slate-700/60">
+                    <div className="w-3 h-3 bg-purple-500 rounded-full flex-shrink-0"></div>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{region}</span>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* Enhanced Sectors Impact */}
-          <Card className="border-0 shadow-lg border border-slate-200/50 dark:border-slate-700/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg text-slate-900 dark:text-slate-100">Sectors Impacted</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-3">
-                {cleanArrayData(article.insights.sectors).map((sector, index) => (
-                  <div key={sector} className="flex items-center gap-2 px-4 py-2 bg-blue-50/80 dark:bg-blue-950/50 rounded-lg border border-blue-200/50 dark:border-blue-800/50">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-blue-700 dark:text-blue-300">{sector}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Sectors Impact */}
+          <Card className="border-0 shadow-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-slate-900 dark:text-slate-100">Sectors Impacted</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-3">
+                  {cleanArrayData(article.insights.sectors).map((sector, index) => (
+                    <div key={sector} className="px-4 py-2 bg-slate-50/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-lg border border-slate-200/60 dark:border-slate-700/60">
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{sector}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
         </div>
 
-        {/* Skills Analysis Sidebar */}
+        {/* Right Column - Sidebar */}
         <div className="space-y-8">
           {/* Skills Comparison Chart */}
-          <Card className="border-0 shadow-lg border border-slate-200/50 dark:border-slate-700/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg text-slate-900 dark:text-slate-100">Skills Impact Overview</CardTitle>
+          <Card className="border-0 shadow-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <div className="w-1 h-6 bg-red-500 rounded-full"></div>
+                Skills Overview
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="h-64">
+            <CardContent className="pt-0">
+              <div className="h-64 flex items-center justify-center">
                 <canvas ref={skillsComparisonChartRef}></canvas>
               </div>
             </CardContent>
           </Card>
 
-          {/* Enhanced Skills Analysis */}
+          {/* Skills Transformation */}
           {(article.insights.skillsReplaced?.length || article.insights.skillsCreated?.length) && (
-            <Card className="border-0 shadow-lg border border-slate-200/50 dark:border-slate-700/50">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg text-slate-900 dark:text-slate-100">Skills Transformation</CardTitle>
+            <Card className="border-0 shadow-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50">
+              <CardHeader className="pb-6">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="w-1 h-6 bg-indigo-500 rounded-full"></div>
+                  Skills Transformation
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="pt-0 space-y-6">
                 {article.insights.skillsReplaced && article.insights.skillsReplaced.length > 0 && (
                   <div>
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-4">
                       <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                      <h3 className="text-base font-semibold text-red-600 dark:text-red-400">Skills at Risk</h3>
+                      <h3 className="font-semibold text-red-600 dark:text-red-400">Skills at Risk</h3>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {article.insights.skillsReplaced.map((skill, index) => (
-                        <div key={`${skill}-${index}`} className="flex items-center gap-2 p-3 bg-red-50/80 dark:bg-red-950/50 rounded-lg border border-red-200/50 dark:border-red-800/50">
-                          <span className="text-sm font-medium text-red-700 dark:text-red-300 leading-tight">{cleanDataString(skill)}</span>
+                        <div key={`${skill}-${index}`} className="p-3 bg-red-50/80 dark:bg-red-950/80 backdrop-blur-sm rounded-lg border border-red-200/60 dark:border-red-800/60">
+                          <span className="text-sm font-medium text-red-700 dark:text-red-300">{cleanDataString(skill)}</span>
                         </div>
                       ))}
                     </div>
@@ -476,21 +465,21 @@ export default function ArticleDetail({ article }: { article: Article }) {
                 )}
 
                 {article.insights.skillsReplaced?.length && article.insights.skillsCreated?.length && (
-                  <div className="flex items-center justify-center py-2">
+                  <div className="flex items-center justify-center">
                     <ArrowRight className="h-5 w-5 text-slate-400" />
                   </div>
                 )}
 
                 {article.insights.skillsCreated && article.insights.skillsCreated.length > 0 && (
                   <div>
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-4">
                       <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                      <h3 className="text-base font-semibold text-emerald-600 dark:text-emerald-400">Emerging Skills</h3>
+                      <h3 className="font-semibold text-emerald-600 dark:text-emerald-400">Emerging Skills</h3>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {article.insights.skillsCreated.map((skill, index) => (
-                        <div key={`${skill}-${index}`} className="flex items-center gap-2 p-3 bg-emerald-50/80 dark:bg-emerald-950/50 rounded-lg border border-emerald-200/50 dark:border-emerald-800/50">
-                          <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300 leading-tight">{cleanDataString(skill)}</span>
+                        <div key={`${skill}-${index}`} className="p-3 bg-emerald-50/80 dark:bg-emerald-950/80 backdrop-blur-sm rounded-lg border border-emerald-200/60 dark:border-emerald-800/60">
+                          <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">{cleanDataString(skill)}</span>
                         </div>
                       ))}
                     </div>
@@ -500,15 +489,18 @@ export default function ArticleDetail({ article }: { article: Article }) {
             </Card>
           )}
 
-          {/* Enhanced Timeframe Card */}
-          <Card className="border-0 shadow-lg border border-slate-200/50 dark:border-slate-700/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg text-slate-900 dark:text-slate-100">Implementation Timeline</CardTitle>
+          {/* Timeline */}
+          <Card className="border-0 shadow-lg bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <div className="w-1 h-6 bg-cyan-500 rounded-full"></div>
+                Timeline
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3 p-4 bg-slate-50/80 dark:bg-slate-800/80 rounded-lg border border-slate-200/50 dark:border-slate-700/50">
-                <CalendarDays className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                <span className="text-base font-semibold text-slate-700 dark:text-slate-300">
+            <CardContent className="pt-0">
+              <div className="flex items-center gap-3 p-4 bg-cyan-50/80 dark:bg-cyan-950/80 backdrop-blur-sm rounded-lg border border-cyan-200/60 dark:border-cyan-800/60">
+                <Clock className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                <span className="font-semibold text-cyan-700 dark:text-cyan-300">
                   {cleanDataString(article.insights.timeframe)}
                 </span>
               </div>

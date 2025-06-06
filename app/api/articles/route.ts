@@ -7,7 +7,75 @@ const dbConfig = {
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASSWORD,
   database: process.env.MYSQL_DATABASE,
-  port: parseInt(process.env.DB_PORT || '3306'),
+  port: parseInt(process.env.MYSQL_PORT || '3306'),
+}
+
+// Helper function to parse funding data and extract numeric values with units
+function parseFundingData(fundingData: string | any[]): string | undefined {
+  if (!fundingData) return undefined;
+  
+  let dataString = '';
+  
+  // Handle array or string input
+  if (Array.isArray(fundingData)) {
+    dataString = fundingData.join(' ');
+  } else {
+    dataString = String(fundingData);
+  }
+  
+  // Remove extra whitespace and normalize
+  dataString = dataString.trim().toLowerCase();
+  
+  if (!dataString) return undefined;
+  
+  // Patterns to match various funding formats
+  const patterns = [
+    // $1.5B, $1.5 billion, $1.5b
+    /\$?(\d+(?:\.\d+)?)\s*(?:billion|b\b)/gi,
+    // $1.5M, $1.5 million, $1.5m  
+    /\$?(\d+(?:\.\d+)?)\s*(?:million|m\b)/gi,
+    // Just numbers with B/M
+    /(\d+(?:\.\d+)?)\s*([bm])\b/gi,
+    // Numbers followed by billion/million words
+    /(\d+(?:\.\d+)?)\s*(billion|million)/gi
+  ];
+  
+  const matches = [];
+  
+  for (const pattern of patterns) {
+    let match;
+    while ((match = pattern.exec(dataString)) !== null) {
+      const value = parseFloat(match[1]);
+      const unit = match[2] ? match[2].toLowerCase() : '';
+      
+      if (unit.startsWith('b') || unit === 'billion') {
+        matches.push(`$${value}B`);
+      } else if (unit.startsWith('m') || unit === 'million') {
+        matches.push(`$${value}M`);
+      }
+    }
+  }
+  
+  // If no structured matches found, try to extract any numbers and guess context
+  if (matches.length === 0) {
+    const numberMatch = dataString.match(/\$?(\d+(?:\.\d+)?)/);
+    if (numberMatch) {
+      const value = parseFloat(numberMatch[1]);
+      // If the original string contains billion/million context, use it
+      if (dataString.includes('billion') || dataString.includes('b')) {
+        matches.push(`$${value}B`);
+      } else if (dataString.includes('million') || dataString.includes('m')) {
+        matches.push(`$${value}M`);
+      } else if (value > 1000) {
+        // Assume large numbers are millions
+        matches.push(`$${value}M`);
+      } else {
+        matches.push(`$${value}K`);
+      }
+    }
+  }
+  
+  return matches.length > 0 ? matches[0] : undefined;
 }
 
 export async function GET(request: NextRequest) {
@@ -29,35 +97,42 @@ export async function GET(request: NextRequest) {
         skills_remaining,
         skills_automated,
         affected_industry,
-        funding_data
-      FROM future_of_jobs 
+        funding_data,
+        detailed_analysis,
+        summary
+      FROM jobs_tracker 
       ORDER BY id DESC
     `)
     
     // Transform the data to match your component interface
-    const articles = (rows as any[]).map(row => ({
-      id: row.id,
-      title: row.title,
-      source: 'Tech Analysis', // You can extract this from URL or add a source column
-      date: new Date().toISOString(), // Add a date column to your table if needed
-      category: row.affected_industry || 'Technology',
-      url: row.url,
-      summary: `Analysis of ${row.jobs_at_risk || 0} jobs at risk with ${row.new_ai_jobs || 0} new AI positions`,
-      fullContent: `This article analyzes the impact on ${row.affected_industry || 'various industries'} with ${row.jobs_replaced || 0} jobs being replaced and ${row.new_ai_jobs || 0} new opportunities created.`,
-      insights: {
-        jobsAffected: parseInt(row.jobs_at_risk) || 0,
-        companiesInvolved: 1, // You can calculate this or add to your schema
-        timeframe: '2024-2025',
-        sectors: row.affected_industry ? [row.affected_industry] : ['Technology'],
-        skillsReplaced: row.skills_automated ? row.skills_automated.split(',').map((s: string) => s.trim()) : [],
-        skillsCreated: row.skills_remaining ? row.skills_remaining.split(',').map((s: string) => s.trim()) : [],
-        trend: determinesTrend(row.jobs_at_risk, row.new_ai_jobs),
-        impactScore: calculateImpactScore(row.jobs_at_risk, row.new_ai_jobs),
-        geographicSpread: ['Global'], // Add geographic data to your schema if needed
-        costSavings: row.funding_data || undefined,
-        jobCreationRatio: calculateJobRatio(row.jobs_replaced, row.new_ai_jobs)
+    const articles = (rows as any[]).map(row => {
+      // Parse funding data properly
+      const parsedFundingData = parseFundingData(row.funding_data);
+      
+      return {
+        id: row.id,
+        title: row.title,
+        source: 'Tech Analysis', // You can extract this from URL or add a source column
+        date: new Date().toISOString(), // Add a date column to your table if needed
+        category: row.affected_industry || 'Technology',
+        url: row.url,
+        summary: row.summary,
+        fullContent: row.detailed_analysis || `This article analyzes the impact on ${row.affected_industry || 'various industries'} with ${row.jobs_replaced || 0} jobs being replaced and ${row.new_ai_jobs || 0} new opportunities created.`,
+        insights: {
+          jobsAffected: parseInt(row.jobs_at_risk) || 0,
+          companiesInvolved: 1, // You can calculate this or add to your schema
+          timeframe: '2024-2025',
+          sectors: row.affected_industry ? [row.affected_industry] : ['Technology'],
+          skillsReplaced: row.skills_automated ? row.skills_automated.split(',').map((s: string) => s.trim()) : [],
+          skillsCreated: row.skills_remaining ? row.skills_remaining.split(',').map((s: string) => s.trim()) : [],
+          trend: determineTrend(row.jobs_at_risk, row.new_ai_jobs),
+          impactScore: calculateImpactScore(row.jobs_at_risk, row.new_ai_jobs),
+          geographicSpread: ['Global'], // Add geographic data to your schema if needed
+          costSavings: parsedFundingData,
+          jobCreationRatio: calculateJobRatio(row.jobs_replaced, row.new_ai_jobs)
+        }
       }
-    }))
+    })
     
     await connection.end()
     
@@ -78,7 +153,7 @@ export async function GET(request: NextRequest) {
 }
 
 // Helper function to determine trend based on job data
-function determinesTrend(jobsAtRisk: number, newAiJobs: number): "positive" | "negative" | "neutral" {
+function determineTrend(jobsAtRisk: number, newAiJobs: number): "positive" | "negative" | "neutral" {
   const jobsAtRiskNum = parseInt(String(jobsAtRisk)) || 0
   const newAiJobsNum = parseInt(String(newAiJobs)) || 0
   
