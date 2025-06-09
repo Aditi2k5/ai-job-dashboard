@@ -1,12 +1,22 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { ModeToggle } from "@/components/mode-toggle"
+import Link from "next/link"
 
 export function DashboardHeader() {
   return (
     <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-6 py-4">
-        <div className="flex items-center justify-end mb-6">
-          <ModeToggle />
+        <div className="flex items-center justify-between mb-6">
+          <div></div>
+          <div className="flex items-center space-x-4">
+            <ModeToggle />
+            <Link
+              href="/about"
+              className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              About Us
+            </Link>
+          </div>
         </div>
 
         <div className="space-y-4">
