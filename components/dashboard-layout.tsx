@@ -1,125 +1,82 @@
 "use client"
 
-import type React from "react"
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarFooter,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
+import { Card, CardContent } from "@/components/ui/card"
 import { ModeToggle } from "@/components/mode-toggle"
-import { BarChart3, Briefcase, GraduationCap, Home, Newspaper, Settings, TrendingUp, Users } from "lucide-react"
-import { DashboardSidebar } from "./dashboard-sidebar"
+import Link from "next/link"
+import { X } from "lucide-react"
+import { useState } from "react"
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
+export function DashboardHeader() {
+  const [showAlert, setShowAlert] = useState(true)
+
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen">
-        {/* Main Navigation Sidebar */}
-        <AppSidebar />
-        
-        {/* Articles Sidebar */}
-        <DashboardSidebar />
-        
-        {/* Main Content */}
-        <main className="flex-1 min-w-0 transition-all duration-300">
-          <header className="flex items-center justify-between border-b p-3 bg-background sticky top-0 z-10">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger />
+    <>
+      {/* Alert Ribbon */}
+      {showAlert && (
+        <div className="dark:bg-blue-700 text-white py-2 px-4 bg-slate-600">
+          <div className="container mx-auto flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm">
+                Click here to learn more{" "}
+                <Link href="/about" className="hover:underline font-medium">
+                  about us
+                </Link>
+              </span>
             </div>
-            <ModeToggle />
-          </header>
-          <div className="p-4 overflow-auto">
-            {children}
+            <button
+              onClick={() => setShowAlert(false)}
+              className="text-white hover:text-gray-200 transition-colors"
+              aria-label="Close alert"
+            >
+              <X size={16} />
+            </button>
           </div>
-        </main>
+        </div>
+      )}
+
+      {/* Main Header */}
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between mb-6">
+            <div></div>
+            <div className="flex items-center space-x-4">
+              <ModeToggle />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">AI Job Market Trends</h2>
+              <p className="text-muted-foreground">Track the impact of AI on the global job market</p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <MetricCard title="Jobs Replaced" value="1.2M" change="+14.2%" />
+              <MetricCard title="Jobs Created" value="850K" change="+23.7%" />
+              <MetricCard title="Net Impact" value="-350K" change="-5.8%" />
+              <MetricCard title="Skills Shift" value="42%" change="+8.3%" />
+            </div>
+          </div>
+        </div>
       </div>
-    </SidebarProvider>
+    </>
   )
 }
 
-function AppSidebar() {
+function MetricCard({ title, value, change }: { title: string; value: string; change: string }) {
+  const isPositive = !change.startsWith("-")
+
   return (
-    <Sidebar className="border-r bg-sidebar" collapsible="icon">
-      <SidebarHeader className="flex items-center px-3 py-3 border-b bg-sidebar">
-        <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-          <TrendingUp className="h-5 w-5 text-primary flex-shrink-0" />
-          <h1 className="text-lg font-bold group-data-[collapsible=icon]:hidden">
-            Future of Jobs
-          </h1>
+    <Card>
+      <CardContent className="p-6">
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-2xl font-bold">{value}</p>
+            <p className={`text-sm font-medium ${isPositive ? "text-green-500" : "text-red-500"}`}>{change}</p>
+          </div>
         </div>
-      </SidebarHeader>
-      
-      <SidebarContent className="px-2 py-2 bg-sidebar">
-        <SidebarMenu className="space-y-1">
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive className="w-full">
-              <a href="/" className="flex items-center gap-3 px-3 py-2 group-data-[collapsible=icon]:justify-center">
-                <Home className="h-4 w-4 flex-shrink-0" />
-                <span className="text-sm group-data-[collapsible=icon]:hidden">Dashboard</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild className="w-full">
-              <a href="/jobs" className="flex items-center gap-3 px-3 py-2 group-data-[collapsible=icon]:justify-center">
-                <Briefcase className="h-4 w-4 flex-shrink-0" />
-                <span className="text-sm group-data-[collapsible=icon]:hidden">Job Trends</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild className="w-full">
-              <a href="/skills" className="flex items-center gap-3 px-3 py-2 group-data-[collapsible=icon]:justify-center">
-                <GraduationCap className="h-4 w-4 flex-shrink-0" />
-                <span className="text-sm group-data-[collapsible=icon]:hidden">Skills Analysis</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild className="w-full">
-              <a href="/layoffs" className="flex items-center gap-3 px-3 py-2 group-data-[collapsible=icon]:justify-center">
-                <Users className="h-4 w-4 flex-shrink-0" />
-                <span className="text-sm group-data-[collapsible=icon]:hidden">Layoff Tracker</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild className="w-full">
-              <a href="/news" className="flex items-center gap-3 px-3 py-2 group-data-[collapsible=icon]:justify-center">
-                <Newspaper className="h-4 w-4 flex-shrink-0" />
-                <span className="text-sm group-data-[collapsible=icon]:hidden">News & Insights</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild className="w-full">
-              <a href="/analytics" className="flex items-center gap-3 px-3 py-2 group-data-[collapsible=icon]:justify-center">
-                <BarChart3 className="h-4 w-4 flex-shrink-0" />
-                <span className="text-sm group-data-[collapsible=icon]:hidden">Analytics</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarContent>
-      
-      <SidebarFooter className="border-t px-2 py-2 bg-sidebar">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild className="w-full">
-              <a href="/settings" className="flex items-center gap-3 px-3 py-2 group-data-[collapsible=icon]:justify-center">
-                <Settings className="h-4 w-4 flex-shrink-0" />
-                <span className="text-sm group-data-[collapsible=icon]:hidden">Settings</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-    </Sidebar>
+      </CardContent>
+    </Card>
   )
 }
