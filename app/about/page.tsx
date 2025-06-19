@@ -2,13 +2,21 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Target, Eye, Lightbulb, Github, Linkedin, Mail } from "lucide-react"
-import { LayoutWrapper } from "@/components/layout-wrapper"
+import { Target, Eye, Lightbulb, Github, Linkedin, Mail, ArrowLeft } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function AboutPage() {
   return (
-    <LayoutWrapper>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
+      <div className="fixed top-4 left-4 z-50">
+        <Link href="/">
+          <Button variant="outline" size="sm" className="gap-2 hover:bg-slate-100 dark:hover:bg-slate-800">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+        </Link>
+      </div>
         <div className="container mx-auto px-6 py-8 max-w-7xl">
           {/* Header Section */}
           <div className="text-center mb-16">
@@ -214,7 +222,6 @@ export default function AboutPage() {
           </div>
         </div>
       </div>
-    </LayoutWrapper>
   )
 }
 
