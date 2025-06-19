@@ -36,6 +36,29 @@ export function DashboardHeader() {
     </div>
   )
 }
+ <>
+      {/* Alert Ribbon */}
+      {showAlert && (
+        <div className="dark:bg-blue-700 text-white py-2 px-4 bg-slate-600">
+          <div className="container mx-auto flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm">
+                Click here to learn more{" "}
+                <Link href="/about" className="hover:underline font-medium">
+                  about us
+                </Link>
+              </span>
+            </div>
+            <button
+              onClick={() => setShowAlert(false)}
+              className="text-white hover:text-gray-200 transition-colors"
+              aria-label="Close alert"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
 function MetricCard({ title, value, change }: { title: string; value: string; change: string }) {
   const isPositive = !change.startsWith("-")
