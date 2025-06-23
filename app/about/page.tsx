@@ -93,8 +93,12 @@ export default function AboutPage() {
                 <CardContent className="p-8">
                   <div className="text-center">
                     {/* Avatar Placeholder */}
-                    <div className="w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <span className="text-3xl font-bold text-white">A</span>
+                    <div className="w-32 h-34 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <img
+                        src="aditi.webp"
+                        alt="Profile photo of Aditi"
+                        className="w-full h-full rounded-full"
+                      />
                     </div>
 
                     <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Aditi</h3>
@@ -107,29 +111,22 @@ export default function AboutPage() {
                     </Badge>
 
                     <p className="text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
-                      Passionate computer science student with a keen interest in web development and AI technologies.
-                      Currently learning React, Node.js, and data visualization while exploring how AI impacts our
-                      future workforce.
+                    Passionate computer science student specializing in AI research and frontend web development. Currently researching 3D vision, neural rendering, 
+                    and NeRF models while building scalable web applications with Next.js and TypeScript.
                     </p>
 
                     <div className="flex justify-center space-x-4">
                       <a
-                        href="#"
+                        href="https://github.com/Aditi2k5"
                         className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                       >
                         <Github className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                       </a>
                       <a
-                        href="#"
+                        href="https://www.linkedin.com/in/aditi-prabakaran/"
                         className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                       >
                         <Linkedin className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                      </a>
-                      <a
-                        href="#"
-                        className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                      >
-                        <Mail className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                       </a>
                     </div>
                   </div>
