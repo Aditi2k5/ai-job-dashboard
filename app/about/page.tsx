@@ -140,7 +140,7 @@ export default function AboutPage() {
                     {/* Avatar Placeholder */}
                     <div className="w-32 h-32 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
                       <img
-                        src="public/WhatsApp Image 2025-06-27 at 11.42.25_e84478e5.jpg"
+                        src="WhatsApp Image 2025-06-27 at 11.42.25_e84478e5.jpg"
                         className="w-full h-full rounded-full"
                         />
 
