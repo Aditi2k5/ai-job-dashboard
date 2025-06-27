@@ -139,7 +139,11 @@ export default function AboutPage() {
                   <div className="text-center">
                     {/* Avatar Placeholder */}
                     <div className="w-32 h-32 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <span className="text-3xl font-bold text-white">C</span>
+                      <img
+                        src="public/WhatsApp Image 2025-06-27 at 11.42.25_e84478e5.jpg"
+                        className="w-full h-full rounded-full"
+                        />
+
                     </div>
 
                     <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Chetan</h3>
