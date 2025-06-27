@@ -148,30 +148,30 @@ export default function AboutPage() {
                       variant="outline"
                       className="mb-4 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
                     >
-                      Economics & Data Science Student
+                      Computer Science Student
                     </Badge>
 
                     <p className="text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
-                      Economics student with a growing interest in data science and AI research. Currently studying the
-                      intersection of technology and labor markets, dedicated to understanding and communicating AI
+                      Computer Science and Operational Research student with a growing interest in data science and AI research. Currently studying the
+                      intersection of technology and the real world, dedicated to understanding and communicating AI
                       trends to fellow students and the broader community.
                     </p>
 
                     <div className="flex justify-center space-x-4">
                       <a
-                        href="#"
+                        href="https://github.com/cheta-nyadav"
                         className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                       >
                         <Github className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                       </a>
                       <a
-                        href="#"
+                        href="https://www.linkedin.com/in/chetanyadav1/"
                         className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                       >
                         <Linkedin className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                       </a>
                       <a
-                        href="#"
+                        href="mailto:itschetanyadav@gmail.com"
                         className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                       >
                         <Mail className="h-5 w-5 text-slate-600 dark:text-slate-400" />
